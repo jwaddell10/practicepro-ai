@@ -1,32 +1,40 @@
+"use client";
+
 import { createClient } from "./lib/supabase/client";
 import { Suspense } from "react";
-import Image from "next/image";
+import { FormEvent } from "react";
+// import Image from "next/image";
 
-async function DrillsData() {
-	const supabase = await createClient();
-	const { data: drills } = await supabase
-		.from("Drill")
-		.select("name, type, skillFocus, notes, difficulty, imageUrl")
-		.eq("isPublic", true);
-	console.log(drills, "drills");
+function DrillsData() {
+	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		console.log(event.currentTarget, "event curr target");
+		const formData = new FormData(event.currentTarget);
+		// console.log(formData, "formdata");
+		const response = await fetch(`/api/practice`, {
+			method: "POST",
+			body: formData,
+		});
+		const data = await response.json();
+		console.log(data, "response from API");
+	};
+	const supabase = createClient();
+	async function getDrills() {
+		const { data: drills } = await supabase
+			.from("Drill")
+			.select("name, type, skillFocus, notes, difficulty, imageUrl")
+			.eq("isPublic", true);
+	}
 	return (
-		<div>
-			{drills?.map((item, index) => (
-				<div key={index}>
-					<li>{item.name}
-                        <ul>{item.notes}</ul>
-                        {/* <Image src={item.imageUrl || ""} alt={item.name || "drill image"} width={200} height={200} /> */}
-                    </li>
-				</div>
-			))}
-		</div>
+		<form onSubmit={handleSubmit}>
+			{/* On submission, the input value will be appended to
+          the URL, e.g. /search?query=abc */}
+			<input type="text" name="name" />
+			<button type="submit">Submit</button>
+		</form>
 	);
 }
 
 export default function Drills() {
-	return (
-		<Suspense fallback={<div>Loading drills...</div>}>
-			<DrillsData />
-		</Suspense>
-	);
+	return <DrillsData />;
 }
